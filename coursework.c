@@ -68,11 +68,11 @@ int setEnvVariables(char *filename, char **var, char *assignment) {
 			*var = strdup( strtok(&str[5], "\n") );
 			fwrite(assignment, 1, sizeof(assignment), fp);
 			fclose(fp);
-			return 1;
+			return 0;
 		}
 	}
 	fclose(fp);
-	return 1;
+	return 0;
 }
 
 int isInDirectory(char *prog, char *dir) {
@@ -89,13 +89,44 @@ int isInDirectory(char *prog, char *dir) {
 	return 0;
 }
 
+int forkProcess(char* directory, char* prog, char* params[]){
+	int pid;
+	if ((pid=fork()) >= 0) {
+		if (pid == 0) {
+			char *torun = strcat(strcat(directory,"/"), prog);
+			execv(torun, params);
+			exit(1);
+		} else {
+			wait(&pid);
+		}
+	} else {
+		perror("Fork failed");
+		return -1;
+	}
+	return 0;	
+}
+
+int changeDirectories(char* home, char* params[]) {
+	if (params[1] == NULL) {
+		int r = chdir(home);
+		if(r==-1){
+			perror("Could not change to home directory");
+			return -1;
+		}
+	} else {
+		chdir(params[1]);
+	}
+	return 0;
+}
+
 int main(int argc, char *args[]) {
 
 	char cwd[100];
-	int pid;
 	
 	char *HOME;
 	char *PATH;
+
+	//Initialise HOME and PATH variables
 
 	if ( getEnvVariables("profile", &HOME, &PATH) == -1) {
 		perror("Terminating");
@@ -125,21 +156,18 @@ int main(int argc, char *args[]) {
 
 	while(1) {
 
-		printf(CYAN "%s > ",getcwd(cwd, 100));
-		printf(WHITE "");
+		//Get command from prompt
+
+		printf(CYAN "%s > ",getcwd(cwd, 100)); printf(WHITE "");
 		fgets(command, cmdlen, stdin);
 		command = strtok(command, "\n");
 
 		//Parse command
+
 		char *params[10];
 		char *arg = strtok(command, " ");
-		char *prog = arg;
-		params[0] = prog;
+		int c = 0;  
 
-		//Get arguments 
-		int c = 1;  
-		arg = strtok(NULL, " ");
-	
 		while (arg != NULL) {
 			params[c++] = arg;
 			arg = strtok(NULL, " ");
@@ -153,7 +181,7 @@ int main(int argc, char *args[]) {
 		int cmdFound = -1;
 			
 		while(conductor != NULL) {	
-			if (isInDirectory(prog,conductor->dir) == 1) {
+			if (isInDirectory(params[0],conductor->dir) == 1) {
 				cmdFound = 1;
 				directory = conductor->dir;
 				break;
@@ -163,28 +191,21 @@ int main(int argc, char *args[]) {
 
 		//Change directories
 		
-		if (strcmp(prog, "cd") == 0) {
-			if (params[1] == NULL) {
-				int r = chdir(HOME);
-				if(r==-1){
-					perror("Could not change to home directory");
-				}
-			} else {
-				chdir(params[1]);
-			}
+		if (strcmp(params[0], "cd") == 0) {
+			changeDirectories(HOME, params);
 			continue;
 		}
 
-		//Assign to profile variables
+		//Assignment to profile variables
 
-		if (strstr(prog, "$HOME") != NULL) {
+		if (strstr(params[0], "$HOME") != NULL) {
 			//HOME = strdup( strtok(&prog[5], "\n"));
-			printf("New home is %s", HOME);
-			char *assignment =  strdup( strtok(&prog[5], "\n"));
-			setEnvVariables("profile", &HOME, assignment);
-		} else if(strstr(prog, "$PATH") != NULL) {
-		//	PATH = strdup(prog[5], "\n"); 
-		//	printf("New path is %s", PATH);
+			//printf("New home is %s", HOME);
+			//char *assignment =  strdup( strtok(&prog[5], "\n"));
+			//setEnvVariables("profile", &HOME, assignment);
+		} else if(strstr(params[0], "$PATH") != NULL) {
+			//PATH = strdup(prog[5], "\n"); 
+			//printf("New path is %s", PATH);
 			//char *assignment = ;
 			//setEnvVariables(PATH, );
 		}
@@ -192,20 +213,7 @@ int main(int argc, char *args[]) {
 		//Fork the process
 
 		if(cmdFound == 1) {
-			if ((pid=fork()) >= 0) {
-				if (pid == 0) {
-					//printf("##########Child process, ");
-					char *torun = strcat(strcat(directory,"/"), prog);
-					//printf("running process: %s with args %s\n", torun, params[1]);
-					execv(torun, params);//&argvs[0]);
-					exit(1);
-				} else {
-					wait(&pid);
-					//printf("##########Parent process\n");
-				}
-			} else {
-				perror("Fork failed");
-			}	
+			forkProcess(directory, params[0], params);
 		} else {
 			printf("Command not found\n");
 		}
