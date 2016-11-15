@@ -1,5 +1,5 @@
 CC = gcc
-FILES = unix_shell.c
+FILES = main.c environment.c linked_list.c parsing.c
 OUT_EXE = output
 
 build: $(FILES) 

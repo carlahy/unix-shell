@@ -1,4 +1,16 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <dirent.h>
 
+#include "environment.h"
+
+#define WHITE  "\x1B[37m"
+#define CYAN "\x1B[36m"
+
+
+//Open file and read lines to find HOME and PATH variables. Assign them to program variables
 int getEnvVariables(char *filename, char **home, char **path) {
 
 	FILE *fp = fopen(filename, "r");
@@ -29,36 +41,34 @@ int getEnvVariables(char *filename, char **home, char **path) {
 
 	if (hasPath == 0 || hasHome == 0) {
 		perror("PATH or HOME variable does not exist");
-		return -1;
+		return 0;
 	}
 
 	fclose(fp);
-	return 0;
+	return 1;
 }
 
-int setEnvVariables(char *filename, char **var, char *assignment) {
-	FILE *fp = fopen(filename, "r");
-
-	if(fp == NULL){
-		perror("File does not exist");
-		return -1;
+int initialiseEnvVariables(char *profile, char** HOME, char** PATH) {
+	if (!getEnvVariables("profile", HOME, PATH)) {
+		perror("Terminating");
+		return 0;
 	}
+	return 1;
+}
 
-	int stringlen = 100;
-	char *str = malloc(sizeof(char) * stringlen);
+char* reassignVariable(char* value, char* DELIM) {
+	return strdup( strtok(&value[strcspn(value,DELIM)+1], "\n"));
+}
 
-	fp = fopen(filename, "r+");
+void promptUser() {
+	char cwd[100];
+	printf(CYAN "%s > ",getcwd(cwd, 100)); printf(WHITE "");
+}
 
-	//Parse file for "var" (PATH or HOME)
-	while( fgets(str, stringlen, fp) != NULL) {
-		if (strstr(str, *var)) {
-			*var = strdup( strtok(&str[5], "\n") );
-			fwrite(assignment, 1, sizeof(assignment), fp);
-			fclose(fp);
-			return 0;
-		}
+int isCommand(char* string, char* cmd) {
+	if (strstr(string, cmd)) {
+		return 1;
 	}
-	fclose(fp);
 	return 0;
 }
 
@@ -88,9 +98,9 @@ int forkProcess(char* directory, char* prog, char* params[]){
 		}
 	} else {
 		perror("Fork failed");
-		return -1;
+		return 0;
 	}
-	return 0;	
+	return 1;	
 }
 
 int changeDirectories(char* home, char* params[]) {
@@ -98,11 +108,10 @@ int changeDirectories(char* home, char* params[]) {
 		int r = chdir(home);
 		if(r==-1){
 			perror("Could not change to home directory");
-			return -1;
+			return 0;
 		}
 	} else {
 		chdir(params[1]);
 	}
-	return 0;
+	return 1;
 }
-
