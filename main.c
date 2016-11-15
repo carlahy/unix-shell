@@ -1,75 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "execute.h"
+#include "directories.h"
+#include "parse.h"
 
-#include "environment.h"
-#include "linked_list.h"
-#include "parsing.h"
+/*The main function makes high level calls to the other source files that handle the shell functionalities.*/
 
 int main(int argc, char *args[]) {
 
-	command = malloc(sizeof(char) * cmdlen);
+	//Read the HOME and PATH variables from profile file
+	processProfile(&HOME, &PATH);
 
-	initialiseEnvVariables("profile",&HOME, &PATH);
-
-	//Store directories in linked list
-
-	getDir(&directory, PATH, ":");
-	root = newNode(directory,NULL);
-	
-	//Add all directories to list
-
-	while( getNextDir(&directory, ":") ){
-		addNodeToEnd(root, newNode(directory,NULL) );		
-	}
+	//Store directories in list with root as the head
+	root = processDir(&directory, PATH);
 
 	//Start user prompt
 
 	while(1) {
+		//Assign memory to the command 
+		command = malloc(sizeof(char) * cmdlen);
 
+		//Get input from stdin and parse into command and parameters
 		promptUser();
-		//Get command from prompt and parse
-		getCommand(&command);
 
-		char *params[10];
-		parseCommand(params, &command);
-
-		//Check directories for command
-
-		NODE *dirs = root;
-		int cmdFound = -1;
-
-		//Iterate through list until command is found
-			
-		while(dirs != NULL) {
-			if (isInDirectory(command,dirs->dir) == 1) {
-				cmdFound = 1;
-				directory = dirs->dir;
-				break;
-			}
-			dirs = dirs->next;
-		}
-
-		//Change directories
+		//Run the command in the shell
+		executeShell();
 		
-		if (isCommand(command, "cd")) {
-			changeDirectories(HOME, params);
-			continue;
-		}
-		else if (isCommand(command, "$HOME")) {
-			HOME = reassignVariable(params[0], "=");
-			continue;
-		} else if(isCommand(command, "$PATH")) {
-			PATH = reassignVariable(params[0], "=");
-			continue;
-		}
-
-		//Fork the process
-
-		if(cmdFound == 1) {
-			forkProcess(directory, command, params);
-		} else {
-			printf("Command not found\n");
-		}
+		//Free command memory to avoid segmentation faults
+		free(command);
 	}
 	return 0;
 }
