@@ -104,31 +104,26 @@ void executeShell() {
 
 	getParameters(params, &command);
 
-	//Iterate through directories to find command
-
-	directory = findInDirectories(root, command);
-
-	//If the command does not exist in a directory
-	if (directory == NULL) {
-		printf("Command not found\n");	
-		return;
+	//If changing directories
+	if (isCommand(command, "cd")) {
+		changeDirectories(HOME, params);
 	}
-	//If the command exists in directory 
+	//If reassigning environment variables
+	else if (isCommand(command, "$HOME")) {
+		HOME = assignVariable(params[0], "=");
+	} else if(isCommand(command, "$PATH")) {
+		PATH = assignVariable(params[0], "=");
+	}
+	//Else, search for command in directories
 	else {
-			
-		//If changing directories
-		if (isCommand(command, "cd")) {
-			changeDirectories(HOME, params);
-		}
+		directory = findInDirectories(root, command);
 
-		//If reassigning environment variables
-		else if (isCommand(command, "$HOME")) {
-			HOME = assignVariable(params[0], "=");
-		} else if(isCommand(command, "$PATH")) {
-			PATH = assignVariable(params[0], "=");
+		//If the command does not exist in a directory
+		if (directory == NULL) {
+			printf("Command not found\n");	
+			return;
 		}
-
-		//Otherwise, fork the process
+		//If command exists, fork the process
 		else {
 			forkProcess(directory, command, params);
 		}
