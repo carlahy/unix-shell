@@ -1,6 +1,6 @@
 CC = gcc
-FILES = main.c execute.c directories.c parse.c
-OUT_EXE = output
+FILES = shell.c execute.c directories.c parse.c
+OUT_EXE = shell
 
 build: $(FILES) 
 	$(CC) -o $(OUT_EXE) $(FILES)

@@ -4,8 +4,8 @@ The aim of this coursework is to write a simplified Unix command interpreter in 
 
 This directory contains the files:
 
-- Main.c
-  - Makes high level calls to the other source files that handle the shell functionalities.
+- Shell.c
+  - Contains the main function that makes high level calls to the other source files that handle the shell functionalities.
 
 - Parse.c
   - Contains functions to parse the directories and the user input, identify commands and identify what directory the command is in. The directories are parsed based on the PATH profile variable. The user input is parsed as a command followed by one or multiple parameters.
