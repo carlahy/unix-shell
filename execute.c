@@ -81,7 +81,7 @@ int forkProcess(char* directory, char* prog, char* params[]){
 	return 1;	
 }
 
-//Using chdir() to change directories in the parent process
+//Change directories in the parent process with chdir()
 int changeDirectories(char* home, char* params[]) {
 	if (params[1] == NULL) {
 		int r = chdir(home);
@@ -95,6 +95,7 @@ int changeDirectories(char* home, char* params[]) {
 	return 1;
 }
 
+//Compiles the functions to read, parse and handle user input
 void executeShell() {
 	getCommand(&command);
 
@@ -102,6 +103,7 @@ void executeShell() {
 		return;
 	}
 
+	//If user entered a command
 	getParameters(params, &command);
 
 	//If changing directories
@@ -118,7 +120,7 @@ void executeShell() {
 	else {
 		directory = findInDirectories(root, command);
 
-		//If the command does not exist in a directory
+		//If the command does not exist in directories, return 
 		if (directory == NULL) {
 			printf("Command not found\n");	
 			return;

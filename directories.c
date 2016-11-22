@@ -10,6 +10,7 @@ check whether a command belongs to a directory,
 find what directory a command belongs to.
 */
 
+//Create a new directory node in the list
 NODE* newDir(char* directory, NODE *next) {
 	NODE* new = malloc(sizeof(NODE));
 	new->dir = directory;
@@ -17,6 +18,7 @@ NODE* newDir(char* directory, NODE *next) {
 	return new;
 }
 
+//Append a directory to the list
 NODE* addDirToList(NODE* head, NODE* new) {
 	NODE* current = head;
 	while(current->next != NULL) {
@@ -26,6 +28,7 @@ NODE* addDirToList(NODE* head, NODE* new) {
 	return head;
 }
 
+//Return a list with all directories from PATH
 NODE* processDir(char** directory, char* path) {
 	getDir(directory, path, ":");
 	root = newDir(*directory,NULL);
@@ -36,17 +39,7 @@ NODE* processDir(char** directory, char* path) {
 	return root;
 }
 
-char* findInDirectories(NODE* root, char* command) {
-	while(root != NULL) {
-		if (isInDirectory(command,root->dir) == 1) {
-			return root->dir;
-		}
-		root = root->next;
-	}
-	return NULL;
-}
-
-//opendir() and readdir() to check if program belongs to directory
+//Check if program belongs to directory using opendir() and readdir()
 int isInDirectory(char *prog, char *dir) {
 	DIR *opndir = opendir(dir);
 	struct dirent *rdentry = readdir(opndir);
@@ -61,3 +54,13 @@ int isInDirectory(char *prog, char *dir) {
 	return 0;
 }
 
+//Iterate through list of directories to find command
+char* findInDirectories(NODE* root, char* command) {
+	while(root != NULL) {
+		if (isInDirectory(command,root->dir) == 1) {
+			return root->dir;
+		}
+		root = root->next;
+	}
+	return NULL;
+}
